@@ -1,0 +1,5 @@
+.DS_Store
+.vault_pass
+/tmp/
+.vagrant/
+scrap.txt

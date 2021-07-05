@@ -1,0 +1,23 @@
+---
+- hosts: all
+  become: true
+
+  vars_files:
+    - app-vars
+  
+  roles: 
+    - role: common
+    - role: user
+    - role: ssh
+    - role: ruby
+      tags: ruby
+    - role: nodejs
+      tags: nodejs
+    - role: yarn
+      tags: nodejs
+    - role: postgresql
+      tags: postgresql
+    - role: nginx
+      tags: nginx
+    - role: logrotate
+      tags: logrotate
