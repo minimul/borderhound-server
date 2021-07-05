@@ -67,7 +67,7 @@ required_packages:
   - bison
   - libreadline6-dev
   - libncurses5-dev
-  - libgdbm5 
+  - libgdbm6
   - libgdbm-dev
   - libpq-dev # postgresql client
   - libjemalloc-dev # jemalloc
@@ -96,15 +96,15 @@ postgresql_listen:
 
 
 # nginx
-nginx_https_enabled: false # replace after setting up certbot
+nginx_https_enabled: true # replace after setting up certbot
 nginx_conf_template: "nginx.conf.j2"
 
 
 # certbot
-# certbot_email: "admin@{{ inventory_hostname }}"
-# certbot_domains:
-#   - "{{ inventory_hostname }}"
-#   - "www.{{ inventory_hostname }}"
+certbot_email: "admin@{{ inventory_hostname }}"
+certbot_domains:
+  - "{{ inventory_hostname }}"
+  - "www.{{ inventory_hostname }}"
 
 
 # PostgreSQL Backup to S3

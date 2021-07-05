@@ -3,7 +3,9 @@
   become: true
 
   vars_files:
-    - app-vars
+    - app-vars.yml
+  tasks:
+    - debug: msg="Variable 'app_name' is set to {{ app_name }}"
   
   roles: 
     - role: common
@@ -17,6 +19,8 @@
       tags: nodejs
     - role: postgresql
       tags: postgresql
+    - role: certbot
+      tags: certbot
     - role: nginx
       tags: nginx
     - role: logrotate
