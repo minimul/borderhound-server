@@ -14,5 +14,10 @@
     - software-properties-common
     - python3-pip
     - virtualenv
+    - htop
+    - sysstat
+    - ripgrep
+    - vim
+    - ntp
     - python3-setuptools
     - "{{ required_packages }}"

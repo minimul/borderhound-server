@@ -1,6 +1,4 @@
 ---
-postgresql_version: "9.6"
-
 postgresql_packages:
   - "postgresql-{{ postgresql_version }}"
   - "postgresql-contrib-{{ postgresql_version }}"

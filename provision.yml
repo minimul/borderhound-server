@@ -4,11 +4,12 @@
 
   vars_files:
     - app-vars.yml
-  tasks:
-    - debug: msg="Variable 'app_name' is set to {{ app_name }}"
   
   roles: 
     - role: common
+      tags: common
+    - role: environment
+      tags: environment
     - role: user
     - role: ssh
     - role: ruby
@@ -19,9 +20,9 @@
       tags: nodejs
     - role: postgresql
       tags: postgresql
-    - role: certbot
-      tags: certbot
     - role: nginx
       tags: nginx
+    #- role: certbot
+    #  tags: certbot
     - role: logrotate
       tags: logrotate

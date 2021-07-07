@@ -1,0 +1,32 @@
+---
+- name: Enable .bashrc vim bindings
+  lineinfile:
+    dest: "/etc/bash.bashrc"
+    line: "set -o vi"
+    state: present
+
+- name: Enable inputrc vim bindings
+  lineinfile:
+    dest: "/etc/inputrc"
+    line: "set editing-mode vi"
+    state: present
+
+- name: Set timezone to {{ timezone }}
+  when: ansible_date_time.tz != timezone
+  command: timedatectl set-timezone {{ timezone_location }}
+
+- name: Copy screenrc
+  copy:
+    src: screenrc
+    dest: /etc
+
+- name: Copy vimrc
+  copy:
+    src: vimrc
+    dest: /etc/vim
+
+- name: tune system swappiness
+  sysctl:
+    name: vm.swappiness
+    value: '1'
+    state: present

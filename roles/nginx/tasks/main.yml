@@ -36,6 +36,13 @@
   with_items:
     - sites-available
     - sites-enabled
+    - ssl
+
+- name: Make /var/lib/nginx have the proper ownership
+  file:
+    path: /var/lib/nginx
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_group }}"
 
 - name: Copy nginx configuration in place
   template:

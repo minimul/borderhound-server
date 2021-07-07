@@ -1,6 +1,8 @@
 ---
 - name: Deploy our Rails ap
   hosts: all
+  vars_files:
+    - app-vars.yml
   become: true
   become_user: "{{ deploy_user }}"
 

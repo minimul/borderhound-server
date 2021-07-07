@@ -3,6 +3,8 @@ app_name:           borderhound
 deploy_user:        deployer
 deploy_group:       "{{ deploy_user }}"
 deploy_user_path:   "/home/{{ deploy_user }}"
+timezone: EDT
+timezone_location: America/Toronto
 
 # App Git repo
 app_git_repo:       "git@github.com:minimul/borderhound.git"
@@ -69,11 +71,14 @@ required_packages:
   - libncurses5-dev
   - libgdbm6
   - libgdbm-dev
+  - acl
   - libpq-dev # postgresql client
   - libjemalloc-dev # jemalloc
+  - certbot
+  - python3-certbot-nginx
 
 # Ruby
-ruby_version: 2.7.3
+ruby_version: 2.7.4
 rbenv_ruby_configure_opts: "RUBY_CONFIGURE_OPTS=--with-jemalloc"
 rbenv_root_path: "{{ deploy_user_path }}/.rbenv"
 rbenv_shell_rc_path: "{{ deploy_user_path }}/.bashrc"
@@ -86,7 +91,7 @@ rbenv_bundle: "{{ rbenv_root_path }}/shims/bundle"
 nodejs_version: "12.x"
 
 # Postgresql
-postgresql_version: "12.7"
+postgresql_version: "12"
 postgresql_db_user: "{{ deploy_user }}_postgresql_user"
 postgresql_db_password: "{{ vault_postgresql_db_password }}" # from vault
 postgresql_db_name: "{{ app_name }}_production"
