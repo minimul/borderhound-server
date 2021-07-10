@@ -1,6 +1,18 @@
 ---
+# - name: add univere repo ?
+#   apt_repository:
+#     repo: universe
+
+- name: Install certbot
+  apt:
+    name:
+      - certbot
+    state: present
+    force: yes
+    update_cache: yes
+
 - name: Ensure that nginx is stopped
-  service: 
+  service:
     name: nginx
     state: stopped
 
@@ -11,4 +23,4 @@
     loop_var: domain
 
 - name: Add certbot renewal cronjob
-  cron: name="renew letsencrypt certificates" hour="0" minute="0" job="/bin/bash certbot renew --non-interactive --quiet --standalone --pre-hook 'service nginx stop' --post-hook 'service nginx start'"
+  cron: name="renew letsencrypt certificates" hour="2" minute="42" job="certbot renew --non-interactive --quiet --standalone --pre-hook 'service nginx stop' --post-hook 'service nginx start'"

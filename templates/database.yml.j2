@@ -1,5 +1,9 @@
 production:
   adapter: postgresql
+  connect_timeout: 5
+  variables:
+    statement_timeout: 15s
+    lock_timeout: 10s
   encoding: unicode
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
   database: "{{ postgresql_db_name }}"

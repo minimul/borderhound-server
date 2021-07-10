@@ -35,8 +35,6 @@ map <Leader>ee :e <C-R>=expand("%:p:h") . '/'<CR>
 map <Leader>se :split <C-R>=expand("%:p:h") . '/'<CR>
 map <Leader>ve :vnew <C-R>=expand("%:p:h") . '/'<CR>
 
-colorscheme murphy
-
 map <C-h> :nohl<cr>
 map <C-s> <esc>:w<CR>
 imap <C-s> <esc>:w<CR>

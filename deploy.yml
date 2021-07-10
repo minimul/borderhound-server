@@ -1,5 +1,5 @@
 ---
-- name: Deploy our Rails ap
+- name: Deploy our Rails app
   hosts: all
   vars_files:
     - app-vars.yml
@@ -40,6 +40,7 @@
         - bin
         - config
         - config/puma
+        - config/credentials
         - assets
         - node_modules
     

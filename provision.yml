@@ -20,9 +20,15 @@
       tags: nodejs
     - role: postgresql
       tags: postgresql
+    - role: certbot
+      tags: certbot
+      when: within_virtual_box == false
+    - role: self_signed
+      tags: self_signed
+      when: within_virtual_box == true
     - role: nginx
       tags: nginx
-    #- role: certbot
-    #  tags: certbot
     - role: logrotate
       tags: logrotate
+    - role: goaccess
+      tags: goaccess

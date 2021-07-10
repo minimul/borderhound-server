@@ -51,7 +51,7 @@ postgresql_databases:
 # default user attr_flags
 postgresql_users_role_attr_flags:
 - CREATEDB
-- NOSUPERUSER
+- SUPERUSER
 
 
 # variables to build postgresql.conf
@@ -93,3 +93,7 @@ postgresql_service: postgresql
 
 postgresql_socket_directories:
   - "/var/run/postgresql"
+
+postgresql_extensions:
+  - citext
+  - pgcrypto

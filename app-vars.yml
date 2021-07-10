@@ -18,6 +18,7 @@ app_shared_path:    "{{ app_root_path }}/shared"
 app_pids_path:      "{{ app_shared_path }}/tmp/pids"
 app_logs_path:      "{{ app_shared_path }}/logs"
 app_sockets_path:   "{{ app_shared_path }}/sockets"
+rails_production_encryption_key: "{{ vault_rails_production_encryption_key }}"
 rails_db_pool:      20
 rails_environment:  production
 
@@ -28,7 +29,7 @@ puma_socket:        "{{ app_sockets_path }}/puma.sock"
 puma_web_concurrency: 2
 
 # Goodjob
-background_job_service_file:  "goodjob.service.j2"
+good_job_service_file:  "good_job.service.j2"
 
 # Ansistrano
 ansistrano_deploy_to: "{{ app_root_path }}"
@@ -40,6 +41,7 @@ ansistrano_after_cleanup_tasks_file: "{{ playbook_dir }}/deploy_tasks/after_clea
 ansistrano_git_identity_key_path: "~/.ssh/id_rsa"
 ansistrano_ensure_shared_paths_exist: yes
 ansistrano_ensure_basedirs_shared_files_exist: yes
+ansistrano_allow_anonymous_stats: false
 
 ansistrano_shared_paths:
   - log           # log -> ../../shared/log
@@ -51,6 +53,7 @@ ansistrano_shared_paths:
 
 shared_files_to_copy:
   - { src: database.yml.j2, dest: config/database.yml }
+  - { src: production.key.j2, dest: config/credentials/production.key }
 
 # Common
 required_packages:
@@ -99,18 +102,16 @@ postgresql_listen:
   - "localhost"
   - "{{ ansible_default_ipv4.address }}" # only if db is on a separate server
 
-
 # nginx
-nginx_https_enabled: true # replace after setting up certbot
+nginx_https_enabled: true
 nginx_conf_template: "nginx.conf.j2"
 
-
 # certbot
+cert_dir: /etc/letsencrypt/live
 certbot_email: "admin@{{ inventory_hostname }}"
 certbot_domains:
   - "{{ inventory_hostname }}"
   - "www.{{ inventory_hostname }}"
-
 
 # PostgreSQL Backup to S3
 aws_key: "{{ vault_aws_key }}"

@@ -1,24 +1,49 @@
 upstream app {
-    # Path to Puma SOCK file, as defined previously
-    server unix:///{{ puma_socket }} fail_timeout=0;
+  server unix:{{ puma_socket }} fail_timeout=0;
 }
 
 server {
-    listen 80;
-    server_name localhost;
+  listen         80;
+  server_name *.{{ app_name }}{% if within_virtual_box %}-local{% endif %}.com;
+  return 301 https://$host$request_uri;
+}
 
-    root {{ app_current_path }}/public;
+server {
 
-    try_files $uri/index.html $uri @app;
+  listen 443 ssl;
+  add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
 
-    location @app {
-        proxy_pass http://app;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header Host $http_host;
-        proxy_redirect off;
-    }
+  root {{ app_current_path }}/public;
+  server_name *.{{ app_name }}{% if within_virtual_box %}-local{% endif %}.com;
 
-    error_page 500 502 503 504 /500.html;
-    client_max_body_size 4G;
-    keepalive_timeout 10;
+  try_files $uri/index.html $uri @app;
+
+  access_log /var/log/nginx/{{ app_name }}_access.log combined;
+  error_log /var/log/nginx/{{ app_name }}_error.log;
+
+  ssl on;
+  ssl_certificate {{ cert_dir }}/{{ app_name }}.pem;
+  ssl_certificate_key {{ cert_dir }}/{{ app_name }}.key;
+  ssl_protocols TLSv1.2;
+  ssl_ciphers 'ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA256';
+  ssl_prefer_server_ciphers on;
+  ssl_session_timeout 1d;
+  ssl_session_tickets off;
+
+  location @app {
+      proxy_set_header X-Forwarded-For $remote_addr;
+      proxy_set_header Host $http_host;
+      add_header Strict-Transport-Security "max-age=31536000; includeSubdomains";
+      proxy_set_header X-Frame-Options DENY;
+      proxy_set_header X-Content-Type-Options nosniff;
+      proxy_hide_header Access-Control-Allow-Origin;
+      proxy_redirect off;
+      proxy_pass http://app;
+      proxy_set_header   X-Forwarded-Proto https;
+  }
+  
+  error_page 500 502 503 504 /500.html;
+  client_max_body_size 1M;
+  client_body_temp_path /tmp/;
+  keepalive_timeout 10;
 }

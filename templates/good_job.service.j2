@@ -1,19 +1,21 @@
 [Unit]
-Description=Sidekiq
+Description=GoodJob background job
 After=network.target
 
 [Service]
-Type=notify
+Type=forking
 User={{ deploy_user }}
-
 EnvironmentFile={{ app_root_path }}/.rbenv-vars
 
 WorkingDirectory={{ app_current_path }}
 
-ExecStart={{ rbenv_bundle }} exec good_job start
-
-# Greatly reduce Ruby memory fragmentation and heap usage
 Environment=MALLOC_ARENA_MAX=2
+Environment=RAILS_ENV=production 
+
+ExecStart={{ rbenv_bundle }} exec good_job start --daemonize
+ExecReload=/bin/kill -s USR2 $MAINPID
+ExecStop=/bin/kill -s QUIT $MAINPID
+PIDFile={{ app_pids_path }}/good_job.pid
 
 # if we crash, restart
 RestartSec=1

@@ -15,7 +15,10 @@
     - python3-pip
     - virtualenv
     - htop
+    - tree
     - sysstat
+    - net-tools
+    - w3m
     - ripgrep
     - vim
     - ntp

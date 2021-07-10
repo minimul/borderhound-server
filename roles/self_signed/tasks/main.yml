@@ -1,0 +1,19 @@
+---
+- name: Copy the generate-self-cert script
+  copy:
+    src: gen-self-signed-cert.sh
+    dest: /root
+    mode: 0700
+
+- name: Create SSL directory ({{ cert_dir }})
+  file:
+    path: "{{ cert_dir }}"
+    state: directory
+    mode: 0755
+    recurse: true
+
+- name: Run generate-self-cert and verify one of the files has been made
+  shell: "/root/gen-self-signed-cert.sh {{ app_name }}"
+  args:
+    creates: "{{ cert_dir }}/{{ app_name }}.pem"
+    chdir: "{{ cert_dir }}"
