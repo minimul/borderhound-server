@@ -16,7 +16,7 @@ app_current_path:   "{{ app_root_path }}/current"
 app_releases_path:  "{{ app_root_path }}/releases"
 app_shared_path:    "{{ app_root_path }}/shared"
 app_pids_path:      "{{ app_shared_path }}/tmp/pids"
-app_logs_path:      "{{ app_shared_path }}/logs"
+app_logs_path:      "{{ app_shared_path }}/log"
 app_sockets_path:   "{{ app_shared_path }}/sockets"
 rails_production_encryption_key: "{{ vault_rails_production_encryption_key }}"
 rails_db_pool:      20
@@ -144,13 +144,13 @@ fluentbit_outputs:
     Retry_Limit: False
 
 logrotate_conf:
-  - path: "ansible"
+  - path: "rails"
     conf: |
-      "{{ app_current_path }}/log/*.log" {
+      "{{ app_logs_path }}/*.log" {
         weekly
-        size 100M
+        size 20M
         missingok
-        rotate 12
+        rotate 52
         compress
         delaycompress
         notifempty
