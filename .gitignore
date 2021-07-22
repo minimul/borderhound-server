@@ -4,3 +4,6 @@
 .vagrant/
 scrap.txt
 .env*
+todo.txt
+vim.sess
+README.md.html

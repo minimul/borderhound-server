@@ -35,7 +35,7 @@
     - name: Create a Floating IP assigned to new droplet
       community.digitalocean.digital_ocean_floating_ip:
         state: present
-        oauth_token: "{{ do_token }}"
+        oauth_token: "{{ do_token }}" # from .env.yaml
         droplet_id: "{{ my_droplet.data.droplet.id }}"
       register: floating_ip
 

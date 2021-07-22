@@ -1,21 +1,10 @@
-<h1 align="center">Ansible Rails</h1>
-<p align="center">
-    <img src="./images/ansible-rails-promo.jpg" alt="Ansible Rails Promo Image" style="max-width:100%;">
-<p>
+## Ansible to install Rails on Ubuntu 20.04 LTS both on VirtualBox and DigitalOcean
 
-Ansible Rails is a playbook for easily deploying Ruby on Rails applications. It uses Vagrant to provision an environment where you can test your deploys. [Ansistrano](https://github.com/ansistrano/deploy) is used for finally deploying our app to staging and production environments.
-
-While this is meant to work out of the box, you can tweak the files in the `roles` directory in order to satisfy your project-specific requirements. 
-
-> **Shameless plug:** If you're looking for a simple bookmarking tool, try [EmailThis.me](https://www.emailthis.me) - a simpler alternative to Pocket that helps you *save ad-free articles and web pages to your email inbox*.
-
----
-
-### What does this do?
-* Configure our server with some sensible defaults
-* Install required/useful packages. See notes below for more details.
-* Auto upgrade all installed packages (TODO)
-* Create a new deployment user (called 'deploy') with passwordless login
+### What does group of playbooks do?
+* Configure Ubuntu server with some sensible defaults with required and useful packages.
+* Vagrant using Ansible as the provisioner handles the VirtualBox development environment.
+* Ansible playbooks for creating, provisioning, and deploying to a DigitalOcean Ubuntu 20.04 droplet. 
+* Create a new deployment user (called 'deployer') with passwordless login
 * SSH hardening
     * Prevent password login
     * Change the default SSH port
@@ -25,8 +14,9 @@ While this is meant to work out of the box, you can tweak the files in the `role
 * Install Logrotate
 * Setup Nginx with some sensible config (thanks to nginxconfig.io)
 * Certbot (for Let's encrypt SSL certificates)
+  * In development self-signed certs are used.
 * Ruby (using Rbenv). 
-    * Defaults to `2.6.6`. You can change it in the `app-vars.yml` file
+    * Defaults to `2.7.3`. You can change it in the `app-vars.yml` file
     * [jemmaloc](https://github.com/jemalloc/jemalloc) is also installed and configured by default
     * [rbenv-vars](https://github.com/rbenv/rbenv-vars) is also installed by default
 * Node.js 
@@ -35,74 +25,138 @@ While this is meant to work out of the box, you can tweak the files in the `role
 * Postgresql. 
     * Defaults to v12. You can specify the version that you need in the `app-vars.yml` file.
 * Puma (with Systemd support for restarting automatically) **See Puma Config section below**
-* GoodJob (with Systemd support for restarting automatically)
-* Ansistrano hooks for performing the following tasks - 
-    * Installing all our gems
-    * Precompiling assets
-    * Migrating our database (using `run_once`)
+* [GoodJob](https://github.com/bensheldon/good_job) (with Systemd support for restarting automatically)
+
+
+* [Ansistrano](https://github.com/ansistrano/deploy) hooks for performing the following tasks - 
+  * Pulling your app from code repo.  
+  * Installing all our gems.
+  * Precompiling assets.
+  * Migrating our database (using `run_once`).
 
 ---
 
-### Getting started
-Here are the steps that you need to follow in order to get up and running with Ansible Rails. 
+This repo is to provide further intel that started with [EmailThis.me](https://www.emailthis.me) [Ansible Rails](https://github.com/EmailThis/ansible-rails) repo. Also, many thanks Noah Gibbs and his [fork](https://github.com/noahgibbs/ansible-codefolio).
 
-#### Step 1. Installation
+These playbooks don't work out of the box as they are hard-coded with variable and names for my [Borderhound app](https://borderhound.com), therefore, you'll have to do some minor editing and replacing.
+
+### Step 1. Installation
 
 ```
-git clone https://github.com/minimul/ansible-rails-ubuntu-20.04 ansible-rails
-cd ansible-rails
+git clone https://github.com/minimul/borderhound-server ansible-rails-ubuntu
+cd ansible-rails-ubuntu
 ```
 
-#### Step 2. Configuration
+### Step 2. Configuration
 Open `app-vars.yml` and change the following variables. Additionally, please review the `app-vars.yml` and see if there is anything else that you would like to modify (e.g.: install some other packages, change ruby, node or postgresql versions etc.)
 
 ```
-app_name:           YOUR_APP_NAME   // Replace with name of your app
-app_git_repo:       "YOUR_GIT_REPO" // e.g.: github.com/EmailThis/et
-app_git_branch:     "master"        // branch that you want to deploy (e.g: 'production')
+app_name:           YOUR_APP_NAME
+app_git_repo:       "YOUR_GIT_REPO"
+app_git_branch:     "master"
 
 postgresql_db_user:     "{{ deploy_user }}_postgresql_user"
 postgresql_db_password: "{{ vault_postgresql_db_password }}" # from vault (see next section)
 postgresql_db_name:     "{{ app_name }}_production"
 
-nginx_https_enabled: false # change to true if you wish to install SSL certificate 
 ```
 
+### Step 3. Storing sensitive information
 
-#### Step 3. Storing sensitive information
-Create a new `vault` file to store sensitive information
-```
-ansible-vault create group_vars/all/vault.yml
-```
+Create a new `vault` file to store sensitive information.
 
-Add the following information to this new vault file
+1. Come up with a secure new vault password.
+2. Put that password, all by itself, into a file called `.vault_pass` in the root of this repo.
+3. `rm group_vars/all/vault.yml`
+4. `ansible-vault create group_vars/all/vault.yml`
+5. Add the following information to this new vault file
 ```
 vault_postgresql_db_password: "XXXXX_SUPER_SECURE_PASS_XXXXX"
 vault_rails_master_key: "XXXXX_MASTER_KEY_FOR_RAILS_XXXXX"
 ```
+6. Note: You can used `ansible-vault edit group_vars/all/vault.yml` to make edits.
 
-#### Step 4. Deploy
+The `.vault_pass` file will not be checked in by Git automatically because it's in the `.gitignore`.
 
-Now that we have configured everything, lets see if everything is working locally. Run the following command -
+### Step 4. Development Deploy
+
+Now that we have configured everything, lets see if everything is working locally.
+
+Let's take a look at the Vagrantfile first
+```ruby
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure(2) do |config|
+  config.vm.box = "bento/ubuntu-20.04"
+
+  config.vm.network "public_network", :bridge => "en0: Ethernet", :ip => "192.168.2.200"
+
+  config.vm.provision "ansible" do |ansible| 
+    ansible.compatibility_mode = '2.0'
+    ansible.playbook = "provision.yml"
+    # ansible.tags = "common,environment"
+    # ansible.tags = "nginx"
+    ansible.extra_vars = { 
+      ansible_python_interpreter: "/usr/bin/python3",
+      within_virtual_box: true
+    }
+  end
+end
 ```
+
+The IP address I'm using works on my subnet but probably not on yours. For example, if your local IP address starts with `192.168.1.xxx` then you'll need an IP with that prefix. You don't have to use a Vagrant `public_network` setting but it makes more a more orthodox setup in your inventories .ini files because then both development and production are IP centric.
+
+
+```
+vagrant box add bento/ubuntu-20.04
 vagrant up
 ```
-Now open your browser and navigate to 192.168.50.2. You should see your Rails application.
 
-If you don't wish to use Vagrant, clone this repo, modify the `inventories/development.ini` file to suit your needs, and then run the following command
-```
-ansible-playbook -i inventories/development.ini provision.yml
-```
 
-To deploy this app to your production server, create another file inside `inventories` directory called `production.ini` with the following contents. For this, you would need a VPS. I've used [DigitalOcean](https://m.do.co/c/031c76b9c838) and [Vultr](https://www.vultr.com/?ref=8597223) in production for my apps and both these services are top-notch.
+Now open your browser and navigate to 192.168.2.200. You should see your Rails application.
+
+If you don't wish to use Vagrant, clone this repo, modify the `inventories/development.ini` file to suit your needs, and then run the following command:
+
+`ansible-playbook -i inventories/development.ini provision.yml`
+
+#### Step 4a. Development Rails Deploy
+
+Before your first deploy:
+
+`ansible-galaxy install ansistrano.deploy ansistrano.rollback`
+
+Deploy using Ansistrano:
+
+`ansible-playbook -i inventories/development.ini deploy.yml`
+
+### Step 5. Production Deploy
+
+#### Step 5a. Create a DigitalOcean Droplet
+
+Your going to need a DigitalOcean account and an API key:
+
+1. Create a new file called `.env.yaml`
+2. Put that file in `.gitignore`:
+  - `echo .env.yaml >> .gitignore`
+3. Install some more Galaxy roles:
+  - `ansible-galaxy collection install community.general community.digitalocean`
+4 `ansible-playbook -e @.env.yaml do-provision.yml`
+
+
+To deploy this app to your production server, create another file inside `inventories` directory called `production.ini` with the following contents. 
+
 ```
 [web]
-192.168.50.2 # replace with IP address of your server.
+XXX.XXX.XXX.XXX # replace with IP address of your droplet.
 
 [all:vars]
 ansible_ssh_user=deployer
 ansible_python_interpreter=/usr/bin/python3
 ```
+
+
+`ansible-playbook -i inventories/production.ini provision.yml`
 
 ---
 
@@ -110,136 +164,34 @@ ansible_python_interpreter=/usr/bin/python3
 
 ####  Installing additional packages
 By default, the following packages are installed. You can add/remove packages to this list by changing the `required_package` variable in `app-vars.yml`
-```
-    - curl
-    - ufw
-    - fail2ban
-    - git-core
-    - apt-transport-https
-    - ca-certificates
-    - software-properties-common
-    - python3-pip
-    - virtualenv
-    - python3-setuptools
-    - zlib1g-dev 
-    - build-essential 
-    - libssl-dev 
-    - libreadline-dev 
-    - libyaml-dev 
-    - libxml2-dev 
-    - libxslt1-dev 
-    - libcurl4-openssl-dev
-    - libffi-dev 
-    - dirmngr 
-    - gnupg
-    - autoconf
-    - bison
-    - libreadline6-dev
-    - libncurses5-dev
-    - libgdbm5 
-    - libgdbm-dev
-    - libpq-dev # postgresql client
-    - libjemalloc-dev # jemalloc
-```
-
-####  Enable UFW
-You can enable UFW by adding the role to `provision.yml` like so - 
-```
-roles:
-    ...
-    ...
-    - role: ufw
-      tags: ufw
-```
-
-Then you can set up the UFW rules in `app-vars.yml` like so -
-```
-ufw_rules:
-  - { rule: "allow", proto: "tcp", from: "any", port: "80" }
-  - { rule: "allow", proto: "tcp", from: "any", port: "443" }
-```
-
-#### Enable Certbot (Let's Encrypt SSL certificates)
-
-Add the role to `provision.yml`
-```
-roles:
-    ...
-    ...
-    - role: certbot
-      tags: certbot
-```
-
-Add the following variables to `app-vars.yml`
-```
-nginx_https_enabled: true
-
-certbot_email: "you@email.me"
-certbot_domains:
-  - "domain.com"
-  - "www.domain.com"
-```
-
-#### PostgreSQL Database Backups
-By default, daily backup is enabled in the `app-vars.yml` file. In order for this to work, the following variables need to be set. If you do not wish to store backups, remove (or uncomment) these lines from `app-vars.yml`.
-
-```
-aws_key: "{{ vault_aws_key }}" # store this in group_vars/all/vault.yml that we created earlier
-aws_secret: "{{ vault_aws_secret }}"
-
-postgresql_backup_dir: "{{ deploy_user_path }}/backups"
-postgresql_backup_filename_format: >-
-  {{ app_name }}-%Y%m%d-%H%M%S.pgdump
-postgresql_db_backup_healthcheck: "NOTIFICATION_URL (eg: https://healthcheck.io/)" # optional
-postgresql_s3_backup_bucket: "DB_BACKUP_BUCKET" # name of the S3 bucket to store backups
-postgresql_s3_backup_hour: "3"
-postgresql_s3_backup_minute: "*"
-postgresql_s3_backup_delete_after: "7 days" # days after which old backups should be deleted
-```
-
 
 #### Puma config
 
-Your Rails app needs to have a puma config file (usually in `/config/puma.rb`). Here's a sample - 
+Here is my `/config/puma.rb`.
 
 ```
-threads_count = ENV.fetch("RAILS_MAX_THREADS") { 5 }
+app_dir = File.expand_path('../', __dir__ )
+shared_dir = File.expand_path('../../shared/', __dir__)
+
+bind "unix://#{shared_dir}/sockets/puma.sock"
+pidfile "#{shared_dir}/tmp/pids/puma.pid"
+
+threads_count = Integer(ENV['RAILS_MAX_THREADS'] || 5)
 threads threads_count, threads_count
 
-port ENV.fetch("PORT") { 3000 }
+worker_timeout 3600 if ENV.fetch("RAILS_ENV", "development") == "development"
+workers Integer(ENV['WEB_CONCURRENCY'] || 5)
 
-rails_env = ENV.fetch("RAILS_ENV") { "development" }
-environment rails_env
+preload_app!
 
-if %w[production staging].member?(rails_env)
-    app_dir = ENV.fetch("APP_DIR") { "YOUR_APP/current" }
-    directory app_dir
+environment ENV.fetch("RAILS_ENV", "development")
 
-    shared_dir = ENV.fetch("SHARED_DIR") { "YOUR_APP/shared" }
+prune_bundler
 
-    # Logging
-    stdout_redirect "#{shared_dir}/log/puma.stdout.log", "#{shared_dir}/log/puma.stderr.log", true
-    
-    pidfile "#{shared_dir}/tmp/pids/puma.pid"
-    state_path "#{shared_dir}/tmp/pids/puma.state"
-    
-    # Set up socket location
-    bind "unix://#{shared_dir}/sockets/puma.sock"
-    
-    workers ENV.fetch("WEB_CONCURRENCY") { 2 }
-    preload_app!
+directory app_dir
 
-elsif rails_env == "development"
-    plugin :tmp_restart
-end
 ```
 
----
-
-### Credits
-* [Geerling Guy](https://github.com/geerlingguy) (for his wonderful book on Ansible)
-* [dresden-weekly/ansible-rails](https://github.com/dresden-weekly/ansible-rails)
-* [EmailThis Ansible-Rails repo](https://github.com/EmailThis/ansible-rails)
 
 ---
 
