@@ -146,8 +146,8 @@ fluentbit_outputs:
 logrotate_conf:
   - path: "rails"
     conf: |
-      "{{ app_logs_path }}/*.log" {
-        weekly
+      {{ app_logs_path }}/*.log {
+        daily
         size 20M
         missingok
         rotate 52

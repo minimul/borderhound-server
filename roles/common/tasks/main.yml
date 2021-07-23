@@ -1,4 +1,22 @@
 ---
+- name: Get stat of last run apt
+  stat:
+    path: /var/cache/apt/pkgcache.bin
+  register: apt_run
+
+- name: "Apt update, Full-upgrade, autoremove, autoclean check"
+  debug:
+    msg: "Skipping apt-update, etc. actions as apt update was run today"
+  when: "'%Y-%m-%d' | strftime(apt_run.stat.mtime) in ansible_date_time.date"
+
+- name: "Apt update, Full-upgrade, autoremove, autoclean"
+  apt:
+    upgrade: full
+    update_cache: yes
+    autoremove: yes
+    autoclean: yes
+  when: "'%Y-%m-%d' | strftime(apt_run.stat.mtime) not in ansible_date_time.date"
+
 - name: Install prerequisites
   apt: name=aptitude update_cache=yes state=latest force_apt_get=yes
 
@@ -17,6 +35,7 @@
     - htop
     - tree
     - sysstat
+    - grc
     - net-tools
     - w3m
     - ripgrep

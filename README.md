@@ -1,6 +1,6 @@
 ## Ansible to install Rails on Ubuntu 20.04 LTS both on VirtualBox and DigitalOcean
 
-### What does group of playbooks do?
+### What does this group of playbooks do?
 * Configure Ubuntu server with some sensible defaults with required and useful packages.
 * Vagrant using Ansible as the provisioner handles the VirtualBox development environment.
 * Ansible playbooks for creating, provisioning, and deploying to a DigitalOcean Ubuntu 20.04 droplet. 
@@ -118,9 +118,9 @@ Now open your browser and navigate to 192.168.2.200. You should see your Rails a
 
 If you don't wish to use Vagrant, clone this repo, modify the `inventories/development.ini` file to suit your needs, and then run the following command:
 
-`ansible-playbook -i inventories/development.ini provision.yml`
+`ansible-playbook -i inventories/development.yml provision.yml`
 
-#### Step 4a. Development Rails Deploy
+#### Step 4a: Development Rails Deploy
 
 Before your first deploy:
 
@@ -128,46 +128,49 @@ Before your first deploy:
 
 Deploy using Ansistrano:
 
-`ansible-playbook -i inventories/development.ini deploy.yml`
+`ansible-playbook -i inventories/development.yml deploy.yml`
 
 ### Step 5. Production Deploy
 
-#### Step 5a. Create a DigitalOcean Droplet
+#### Step 5a: Create a DigitalOcean Droplet
 
 Your going to need a DigitalOcean account and an API key:
 
-1. Create a new file called `.env.yaml`
-2. Put that file in `.gitignore`:
+1. Create a SSH key for new server e.g.:
+  - `cd ~/.ssh`
+  - `ssh-keygen -t ed25519 -f borderhound`
+2. Create a new file called `.env.yml`.
+  - See sample below.
+3. Put that file in `.gitignore`:
   - `echo .env.yaml >> .gitignore`
-3. Install some more Galaxy roles:
+4. Install some more Galaxy roles:
   - `ansible-galaxy collection install community.general community.digitalocean`
-4 `ansible-playbook -e @.env.yaml do-provision.yml`
+5. `ansible-playbook -e @.env.yaml do-provision.yml`
 
-
-To deploy this app to your production server, create another file inside `inventories` directory called `production.ini` with the following contents. 
+##### .env.yml.sample
 
 ```
-[web]
-XXX.XXX.XXX.XXX # replace with IP address of your droplet.
-
-[all:vars]
-ansible_ssh_user=deployer
-ansible_python_interpreter=/usr/bin/python3
+do_token: xXXXxxxxxXXXXXxxx # Open a DigitalOcean Account to obtain
+my_public_ssh_key: XXXXxxxXXXXXXX # The SSH key you made in step one
 ```
 
+#### Step 5b: Provision the new DigitalOcean Droplet
 
-`ansible-playbook -i inventories/production.ini provision.yml`
+1. Record the floating IP and create a DNS "A" and "CNAME" record with the floating IP mapped to your domain name.
+2. Make sure you Puma config file is similar to mine. See below.
+3. Create another file inside `inventories` directory called `production.yml` with the floating IP.
+  - `ansible-playbook -i inventories/production.yml provision.yml`
+4. Deploy your Rails app
+  - `ansible-playbook -i inventories/production.yml deploy.yml`
 
----
-
-### Additional Configuration
+### Additional Configuration & Miscellaneous Notes
 
 ####  Installing additional packages
 By default, the following packages are installed. You can add/remove packages to this list by changing the `required_package` variable in `app-vars.yml`
 
 #### Puma config
 
-Here is my `/config/puma.rb`.
+Your Here is my `/config/puma.rb`.
 
 ```
 app_dir = File.expand_path('../', __dir__ )
@@ -190,6 +193,24 @@ prune_bundler
 
 directory app_dir
 
+```
+
+#### Installing Ansible locally in POSIX Systems With ASDF
+
+These Ansible roles work for Ansible 2.9.23. I suggest using the excellent [ASDF](https://asdf-vm.com) in and aid to use get the correct Ansible version installed. So install ASDF first and then do these steps:
+
+```
+$ asdf plugin add python
+$ asdf list all python | less
+$ asdf plugin add python
+$ asdf reshim
+$ cd [ansible-rails-ubuntu dir]
+$ echo 'python 3.8.5' > .tool-versions
+$ pip install --upgrade pip
+$ pip install ansible
+pip install ansible==2.9.23
+$ asdf reshim python
+$ which ansible
 ```
 
 
