@@ -22,8 +22,13 @@ server {
   error_log /var/log/nginx/{{ app_name }}_error.log;
 
   ssl on;
-  ssl_certificate {{ cert_dir }}/{{ app_name }}.pem;
-  ssl_certificate_key {{ cert_dir }}/{{ app_name }}.key;
+  {% if within_virtual_box %}
+    ssl_certificate {{ cert_dir }}/{{ app_name }}.pem;
+    ssl_certificate_key {{ cert_dir }}/{{ app_name }}.key;
+  {% else %}
+    ssl_certificate {{ cert_dir }}/{{ app_name }}.pem;
+    ssl_certificate_key {{ cert_dir }}/{{ app_name }}.key;
+  {% end %}
   ssl_protocols TLSv1.2;
   ssl_ciphers 'ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA256';
   ssl_prefer_server_ciphers on;

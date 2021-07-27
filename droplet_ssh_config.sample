@@ -1,0 +1,11 @@
+Host default
+  HostName [PUT IN HOSTNAME or IP ADDRESS]
+  User root
+  Port 22
+  UserKnownHostsFile /dev/null
+  StrictHostKeyChecking no
+  PasswordAuthentication no
+  IdentityFile [PUT IN PRIVATE KEY PATH]
+  IdentitiesOnly yes
+  LogLevel FATAL
+
