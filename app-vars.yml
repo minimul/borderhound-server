@@ -100,6 +100,7 @@ rubies_path: "{{ rbenv_root_path }}/versions"
 ruby_path: "{{ rubies_path }}/{{ ruby_version }}"
 rbenv_bin: "{{ rbenv_root_path }}/bin/rbenv"
 rbenv_bundle: "{{ rbenv_root_path }}/shims/bundle"
+additional_rubies: []
 
 # Nodejs
 nodejs_version: "12.x"
@@ -133,10 +134,6 @@ postgresql_shell_locale: "{{ postgresql_locale }}"
 postgresql_shell_encoding: "{{ postgresql_encoding | replace('-', '') | lower }}"
 pg_hba_template: "pg_hba.conf.j2"
 postgresql_parameters_template: "postgresql.conf.j2"
-# default application database
-postgresql_db_user: '' # name of the user (empty means no user is created)
-postgresql_db_password: ''
-postgresql_db_name: '' # name of the database (empty means no database is created)
 # all the created users
 postgresql_users:
 - name: "{{ postgresql_db_user | default('') }}"
@@ -156,8 +153,6 @@ postgresql_users_role_attr_flags:
 - SUPERUSER
 # variables to build postgresql.conf
 # postgresql_host: "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}"
-postgresql_listen:
-  - "localhost"
 postgresql_port: 5432
 postgresql_max_connections: 100
 postgresql_connections:
