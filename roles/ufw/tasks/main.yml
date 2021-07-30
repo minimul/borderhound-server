@@ -1,29 +1,18 @@
-- name: Install UFW
-  apt: package=ufw state=present
+---
+- name: Allow all outgoing requests
+  ufw: policy=allow direction=outgoing
 
-- name: Reset UFW to defaults
-  ufw: state=reset
+- name: Deny all incoming requests
+  ufw: policy=deny direction=incoming
 
-- name: Configure UFW defaults
-  ufw: direction={{ item.direction }} policy={{ item.policy }}
-  with_items:
-    - { direction: 'incoming', policy: 'deny' }
-    - { direction: 'outgoing', policy: 'allow' }
-  notify:
-    - Restart UFW
+- name: Allow ssh access
+  ufw: rule=allow name=OpenSSH
 
-- name: Configure UFW rules
-  ufw: rule={{ item.rule }} port={{ item.port }} from={{ item.from }} proto={{ item.proto }}
-  with_items:
-    - { rule: 'limit', port: '{{ ssh_port | default("22") }}', proto: 'tcp', from: "any" }
-    - "{{ ufw_rules }}"
-  notify:
-    - Restart UFW
+- name: Allow HTTP access
+  ufw: rule=allow port=80 proto=tcp
 
-- name: Enable UFW logging
-  ufw: logging=on
-  notify:
-    - Restart UFW
+- name: Allow HTTPS access
+  ufw: rule=allow port=443 proto=tcp
 
-- name: Enable UFW
-  ufw: state=enabled
+- name: Start UFW
+  ufw: state=enabled logging=low

@@ -32,3 +32,9 @@
       tags: logrotate
     - role: goaccess
       tags: goaccess
+    - role: fail2ban
+      tags: fail2ban
+    - role: ufw
+      tags: ufw
+    - role: swapfile
+      tags: swapfile

@@ -208,6 +208,13 @@ postgresql_s3_backup_hour: "3"
 postgresql_s3_backup_minute: "*"
 postgresql_s3_backup_delete_after: "7 days" # days after which old backups should be deleted
 
+# Swap disk
+swapfile:
+  path: /swapfile
+  size_gb: 2
+  swappiness: 3
+  vfs_cache_pressure: 50
+
 # fluentbit
 fluentbit_flush_seconds: 2
 fluentbit_inputs:

@@ -13,7 +13,7 @@
       register: ssh_key
     
     - debug:
-        msg: "Create SSH key result: {{ ssh_key }}"
+        msg: "Create SSH key result: {{ ssh_key }} and droplet_floating_ip value: {{ droplet_floating_ip}}"
 
     - name: Create a new droplet if not already created
       community.digitalocean.digital_ocean_droplet:
@@ -32,12 +32,27 @@
     - debug:
         msg: "ID is {{ my_droplet.data.droplet.id }}, IP is {{ my_droplet.data.ip_address }}"
 
-    - name: Create a Floating IP assigned to new droplet
+    - name: Create a Floating IP assigned to a new droplet
       community.digitalocean.digital_ocean_floating_ip:
         state: present
         oauth_token: "{{ do_token }}" # from .env.yaml
         droplet_id: "{{ my_droplet.data.droplet.id }}"
       register: floating_ip
+      when: droplet_floating_ip == ""
 
     - debug:
         msg: "Floating IP completed_at: {{ floating_ip.data }}"
+      when: droplet_floating_ip == ""
+    
+    - name: Assign existing Floating IP to the new droplet
+      community.digitalocean.digital_ocean_floating_ip:
+        state: present
+        oauth_token: "{{ do_token }}" # from .env.yaml
+        droplet_id: "{{ my_droplet.data.droplet.id }}"
+        ip: "{{ droplet_floating_ip }}"
+      register: existing_floating_ip
+      when: droplet_floating_ip != ""
+
+    - debug:
+        msg: "Existing Floating IP assigned_at: {{ existing_floating_ip.data }}"
+      when: droplet_floating_ip != ""

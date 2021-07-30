@@ -1,0 +1,12 @@
+[DEFAULT]
+ignoreip = 127.0.0.1/8 ::1 {{ ip_address }}
+bantime  = 1d
+findtime  = 10m
+maxretry = 5
+
+[sshd]
+enabled   = true
+maxretry  = 4
+findtime  = 1d
+bantime   = 4w
+ignoreip  = 127.0.0.1/8 {{ ip_address }}

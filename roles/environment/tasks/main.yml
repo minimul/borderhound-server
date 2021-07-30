@@ -24,9 +24,3 @@
   copy:
     src: vimrc
     dest: /etc/vim
-
-- name: tune system swappiness
-  sysctl:
-    name: vm.swappiness
-    value: '1'
-    state: present

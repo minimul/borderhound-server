@@ -1,0 +1,6 @@
+---
+roles:
+  - name: ansistrano.deploy
+  - name: ansistrano.rollback
+  - name: community.general 
+  - name: community.digitalocean

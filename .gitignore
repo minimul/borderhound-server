@@ -3,7 +3,7 @@
 /tmp/
 .vagrant/
 scrap.txt
-.env*
+.env.yml
 todo.txt
 vim.sess
 README.md.html

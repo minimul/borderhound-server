@@ -1,4 +1,4 @@
-## Ansible to install Rails on Ubuntu 20.04 LTS both on VirtualBox and DigitalOcean
+## Ansible playbooks to install Rails on Ubuntu 20.04 LTS both on VirtualBox and DigitalOcean
 
 ### What does this group of playbooks do?
 * Configure Ubuntu server with some sensible defaults with required and useful packages.
@@ -11,6 +11,7 @@
     * Prevent root login
 * Setup UFW (firewall)
 * Setup Fail2ban
+* Creates a swapfile as they're great protection against an outage.
 * Install Logrotate
 * Setup Nginx with some sensible config (thanks to nginxconfig.io)
 * Certbot (for Let's encrypt SSL certificates)
@@ -27,7 +28,6 @@
 * Puma (with Systemd support for restarting automatically) **See Puma Config section below**
 * [GoodJob](https://github.com/bensheldon/good_job) (with Systemd support for restarting automatically)
 
-
 * [Ansistrano](https://github.com/ansistrano/deploy) hooks for performing the following tasks - 
   * Pulling your app from code repo.  
   * Installing all our gems.
@@ -36,7 +36,7 @@
 
 ---
 
-This repo is to provide further intel that started with [EmailThis.me](https://www.emailthis.me) [Ansible Rails](https://github.com/EmailThis/ansible-rails) repo. Also, many thanks Noah Gibbs and his [fork](https://github.com/noahgibbs/ansible-codefolio).
+This repo is to provide further intel that started with [EmailThis.me](https://www.emailthis.me) [Ansible Rails](https://github.com/EmailThis/ansible-rails) repo, Noah Gibb's [fork](https://github.com/noahgibbs/ansible-codefolio), and Pete Hawkins's [repo](https://github.com/phawk/rails-deploy).
 
 These playbooks don't work out of the box as they are hard-coded with variable and names for my [Borderhound app](https://borderhound.com), therefore, you'll have to do some minor editing and replacing.
 
@@ -45,21 +45,12 @@ These playbooks don't work out of the box as they are hard-coded with variable a
 ```
 git clone https://github.com/minimul/borderhound-server ansible-rails-ubuntu
 cd ansible-rails-ubuntu
+ansible-galaxy install -r requirements.yml
 ```
 
-### Step 2. Configuration
-Open `app-vars.yml` and change the following variables. Additionally, please review the `app-vars.yml` and see if there is anything else that you would like to modify (e.g.: install some other packages, change ruby, node or postgresql versions etc.)
+### Step 2. Edit vars in app-vars.yml to your liking
 
-```
-app_name:           YOUR_APP_NAME
-app_git_repo:       "YOUR_GIT_REPO"
-app_git_branch:     "master"
-
-postgresql_db_user:     "{{ deploy_user }}_postgresql_user"
-postgresql_db_password: "{{ vault_postgresql_db_password }}" # from vault (see next section)
-postgresql_db_name:     "{{ app_name }}_production"
-
-```
+Open `app-vars.yml` and change the variable to suit your needs. Additionally, please review the `app-vars.yml` and see if there is anything else that you would like to modify (e.g.: install some other packages, change ruby, node or postgresql versions etc.)
 
 ### Step 3. Storing sensitive information
 
@@ -78,11 +69,11 @@ vault_rails_master_key: "XXXXX_MASTER_KEY_FOR_RAILS_XXXXX"
 
 The `.vault_pass` file will not be checked in by Git automatically because it's in the `.gitignore`.
 
-### Step 4. Development Deploy
+### Step 4. Development Provision & Deploy
 
-Now that we have configured everything, lets see if everything is working locally.
+After modifying the configuration let's see if everything is working locally.
 
-Let's take a look at the Vagrantfile first
+Take a look at the Vagrantfile first:
 ```ruby
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
@@ -91,68 +82,45 @@ Vagrant.configure(2) do |config|
   config.vm.box = "bento/ubuntu-20.04"
 
   config.vm.network "public_network", :bridge => "en0: Ethernet", :ip => "192.168.2.200"
-
-  config.vm.provision "ansible" do |ansible| 
-    ansible.compatibility_mode = '2.0'
-    ansible.playbook = "provision.yml"
-    # ansible.tags = "common,environment"
-    # ansible.tags = "nginx"
-    ansible.extra_vars = { 
-      ansible_python_interpreter: "/usr/bin/python3",
-      within_virtual_box: true
-    }
-  end
 end
 ```
 
-The IP address I'm using works on my subnet but probably not on yours. For example, if your local IP address starts with `192.168.1.xxx` then you'll need an IP with that prefix. You don't have to use a Vagrant `public_network` setting but it makes more a more orthodox setup in your inventories .ini files because then both development and production are IP centric.
+The IP address I'm using works on my subnet but maybe not on yours. For example, if your local IP address starts with `192.168.1.xxx` then you'll need an IP with that prefix. You don't have to use a Vagrant `public_network` setting but it makes a more orthodox setup because then both development and production inventory files can then be IP centric.
 
 
 ```
 vagrant box add bento/ubuntu-20.04
 vagrant up
+# Provision the server
+ansible-playbook -i inventories/development.yml provision.yml
+# Deploy your Rails app using Ansistrano:
+ansible-playbook -i inventories/development.yml deploy.yml
 ```
 
+If all goes well you should be able to see your app when to the IP address, `192.168.2.200` in my case.
 
-Now open your browser and navigate to 192.168.2.200. You should see your Rails application.
+Notes:
 
-If you don't wish to use Vagrant, clone this repo, modify the `inventories/development.ini` file to suit your needs, and then run the following command:
+- I don't bother with builtin Vagrant provisioning. It is better to just run provisioning via Ansible command line e.g. `ansible-playbook -i inventories/development.yml provision.yml` as this is how you're going to provision production and that's what the development environment is supposed to be prepping you for. 
 
-`ansible-playbook -i inventories/development.yml provision.yml`
+- Remember to make use of the tags e.g. `ansible-playbook --tags swapfile -i inventories/development.yml provision.yml`. Tags will save a bunch of time as you modify and hack the roles to meet your needs.
 
-#### Step 4a: Development Rails Deploy
+- I also made a host name entry (`borderhound-local.com`) in my local host file `/etc/hosts`. You can do the same with your domain/app name because within the nginx role there will be a `server_name` entry added like this: `{{ app_name }}-local.com`. This will only be done in development.
 
-Before your first deploy:
-
-`ansible-galaxy install ansistrano.deploy ansistrano.rollback`
-
-Deploy using Ansistrano:
-
-`ansible-playbook -i inventories/development.yml deploy.yml`
-
-### Step 5. Production Deploy
+### Step 5. Production Provision & Deploy
 
 #### Step 5a: Create a DigitalOcean Droplet
 
-Your going to need a DigitalOcean account and an API key:
+Your going to need a DigitalOcean (DO) account and an API key. You should definitely leverage a DO floating IP and that is what I'm doing in these playbooks. In the `do-provision.yml` playbook it will create a floating IP automatically. If you make a floating IP on DO manually (probably the best route frankly) then enter it in `.env.yml` (see step 2):
 
 1. Create a SSH key for new server e.g.:
   - `cd ~/.ssh`
   - `ssh-keygen -t ed25519 -f borderhound`
-2. Create a new file called `.env.yml`.
-  - See sample below.
+2. Create a new file called `.env.yml` using the `.env.yml.sample` file as a template.
 3. Put that file in `.gitignore`:
   - `echo .env.yaml >> .gitignore`
 4. Install some more Galaxy roles:
-  - `ansible-galaxy collection install community.general community.digitalocean`
-5. `ansible-playbook -e @.env.yaml do-provision.yml`
-
-##### .env.yml.sample
-
-```
-do_token: xXXXxxxxxXXXXXxxx # Open a DigitalOcean Account to obtain
-my_public_ssh_key: XXXXxxxXXXXXXX # The SSH key you made in step one
-```
+5. `ansible-playbook -e @.env.yml do-provision.yml`
 
 #### Step 5b: Provision the new DigitalOcean Droplet
 
