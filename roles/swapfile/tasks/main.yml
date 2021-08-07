@@ -2,36 +2,5 @@
   command: swapon -s
   register: swap_on
 
-- name: Create swap file
-  command: fallocate -l {{ swapfile.size_gb }}G {{ swapfile.path }}
+- include: swap.yml
   when: swap_on.stdout == ""
-
-- name: Change swap file permissions
-  file: path={{ swapfile.path }} owner=root group=root mode=0600
-
-- name: Make swap file
-  command: mkswap {{ swapfile.path }}
-  when: swap_on.stdout == ""
-
-- name: Write swap entry in fstab
-  mount:
-    path: swap 
-    src: "{{ swapfile.path }}"
-    fstype: swap
-    opts: sw
-    passno: "0"
-    dump: "0"
-    state: present
-
-- name: Mount swap
-  command: swapon {{ swapfile.path }}
-  when: swap_on.stdout == ""
-
-- name: tune system swappiness
-  sysctl:
-    name: "{{ item.name }}"
-    value: "{{ item.value }}"
-    state: present
-  with_items:
-    - { name: vm.swappiness, value: "{{ swapfile.swappiness }}" }
-    - { name: vm.vfs_cache_pressure, value: "{{ swapfile.vfs_cache_pressure }}" }

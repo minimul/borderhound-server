@@ -1,4 +1,4 @@
-## Ansible playbooks to install Rails on Ubuntu 20.04 LTS both on VirtualBox and DigitalOcean
+## Ansible playbooks to install your Rails app on Ubuntu 20.04 LTS both on VirtualBox and DigitalOcean
 
 ### What does this group of playbooks do?
 * Configure Ubuntu server with some sensible defaults with required and useful packages.
@@ -25,7 +25,7 @@
 * Yarn
 * Postgresql. 
     * Defaults to v12. You can specify the version that you need in the `app-vars.yml` file.
-* Puma (with Systemd support for restarting automatically) **See Puma Config section below**
+* Puma (with Systemd support for restarting automatically)
 * [GoodJob](https://github.com/bensheldon/good_job) (with Systemd support for restarting automatically)
 
 * [Ansistrano](https://github.com/ansistrano/deploy) hooks for performing the following tasks - 
@@ -91,8 +91,6 @@ The IP address I'm using works on my subnet but maybe not on yours. For example,
 ```
 vagrant box add bento/ubuntu-20.04
 vagrant up
-# Provision the server
-ansible-playbook -i inventories/development.yml provision.yml
 # Deploy your Rails app using Ansistrano:
 ansible-playbook -i inventories/development.yml deploy.yml
 ```
@@ -101,9 +99,11 @@ If all goes well you should be able to see your app when to the IP address, `192
 
 Notes:
 
-- I don't bother with builtin Vagrant provisioning. It is better to just run provisioning via Ansible command line e.g. `ansible-playbook -i inventories/development.yml provision.yml` as this is how you're going to provision production and that's what the development environment is supposed to be prepping you for. 
+- To provision in development you must use `vagrant provision` and it has all of the proper SSH settings.I don't bother with builtin Vagrant provisioning. 
 
-- Remember to make use of the tags e.g. `ansible-playbook --tags swapfile -i inventories/development.yml provision.yml`. Tags will save a bunch of time as you modify and hack the roles to meet your needs.
+- Remember to make use of the tags. See the Vagrantfile on how to do that. Tags will save a bunch of time as you modify and hack the roles to meet your needs.
+
+- The `inventories/development.yml` file is only for using the `deploy.yml` playbook to deploy your Rails app. You can use the inventory file for provisioning after the initial provision but best to just stick with `vagrant provision`.
 
 - I also made a host name entry (`borderhound-local.com`) in my local host file `/etc/hosts`. You can do the same with your domain/app name because within the nginx role there will be a `server_name` entry added like this: `{{ app_name }}-local.com`. This will only be done in development.
 
@@ -120,48 +120,27 @@ Your going to need a DigitalOcean (DO) account and an API key. You should defini
 3. Put that file in `.gitignore`:
   - `echo .env.yaml >> .gitignore`
 4. Install some more Galaxy roles:
-5. `ansible-playbook -e @.env.yml do-provision.yml`
+5. `ansible-playbook -e "@.env.yml" do-provision.yml`
+6. Put the returned floating IP in .env.yml.
 
 #### Step 5b: Provision the new DigitalOcean Droplet
 
 1. Record the floating IP and create a DNS "A" and "CNAME" record with the floating IP mapped to your domain name.
-2. Make sure you Puma config file is similar to mine. See below.
-3. Create another file inside `inventories` directory called `production.yml` with the floating IP.
-  - `ansible-playbook -i inventories/production.yml provision.yml`
+2. Make sure your rails app Puma config file is similar or the same as the [sample provided](https://github.com/minimul/borderhound-server/blob/main/puma.for.rails.app.sample.rb).
+3. Provision the droplet
+  - `ansible-playbook -e "@.env.yml" -i inventories/production.yml provision.yml`
 4. Deploy your Rails app
-  - `ansible-playbook -i inventories/production.yml deploy.yml`
+  - `ansible-playbook -e "@.env.yml" -i inventories/production.yml deploy.yml`
+
+Notes:
+
+- Tags example: `ansible-playbook --tags fail2ban -e "@.env.yml" -i inventories/production.yml provision.ym`
 
 ### Additional Configuration & Miscellaneous Notes
 
 ####  Installing additional packages
 By default, the following packages are installed. You can add/remove packages to this list by changing the `required_package` variable in `app-vars.yml`
 
-#### Puma config
-
-Your Here is my `/config/puma.rb`.
-
-```
-app_dir = File.expand_path('../', __dir__ )
-shared_dir = File.expand_path('../../shared/', __dir__)
-
-bind "unix://#{shared_dir}/sockets/puma.sock"
-pidfile "#{shared_dir}/tmp/pids/puma.pid"
-
-threads_count = Integer(ENV['RAILS_MAX_THREADS'] || 5)
-threads threads_count, threads_count
-
-worker_timeout 3600 if ENV.fetch("RAILS_ENV", "development") == "development"
-workers Integer(ENV['WEB_CONCURRENCY'] || 5)
-
-preload_app!
-
-environment ENV.fetch("RAILS_ENV", "development")
-
-prune_bundler
-
-directory app_dir
-
-```
 
 #### Installing Ansible locally in POSIX Systems With ASDF
 

@@ -194,6 +194,7 @@ certbot_email: "admin@{{ inventory_hostname }}"
 certbot_domains:
   - "{{ inventory_hostname }}"
   - "www.{{ inventory_hostname }}"
+certbot_flags: ""
 
 # PostgreSQL Backup to S3
 aws_key: "{{ vault_aws_key }}"

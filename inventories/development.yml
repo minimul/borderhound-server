@@ -2,7 +2,7 @@
 
 all:
   vars:
-    ansible_ssh_user: root
+    ansible_ssh_user: deployer
     ansible_python_interpreter: /usr/bin/python3
     within_virtual_box: true
     ip_address: 192.168.2.200
