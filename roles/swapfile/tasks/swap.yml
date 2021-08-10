@@ -10,7 +10,7 @@
 
 - name: Write swap entry in fstab
   mount:
-    path: swap 
+    path: swap
     src: "{{ swapfile.path }}"
     fstype: swap
     opts: sw

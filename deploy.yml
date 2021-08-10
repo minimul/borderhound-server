@@ -56,13 +56,3 @@
 
   roles:
     - role: ansistrano.deploy
-    
-    - role: puma
-      tags: puma
-      become: true
-      become_user: root
-      
-    - role: goodjob
-      tags: goodjob
-      become: true
-      become_user: root
