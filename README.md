@@ -134,7 +134,7 @@ Your going to need a DigitalOcean (DO) account and an API key. You should defini
 
 Notes:
 
-- Tags example: `ansible-playbook --tags fail2ban -e "@.env.yml" -i inventories/production.yml provision.ym`
+- Tags usage example: `ansible-playbook --tags fail2ban -e "@.env.yml" -i inventories/production.yml provision.ym`
 
 ### Additional Configuration & Miscellaneous Notes
 

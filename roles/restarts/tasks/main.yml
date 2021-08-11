@@ -1,0 +1,22 @@
+
+- name: Restart puma
+  systemd:
+    name: puma
+    state: restarted
+
+- name: Restart GoodJob
+  systemd:
+    name: good_job
+    state: restarted
+
+- name: Reload nginx
+  systemd:
+    name: nginx
+    state: reloaded
+
+- name: Update crontab
+  become: true
+  become_user: "{{ deploy_user }}"
+  shell: "{{ rbenv_bundle }} exec whenever --update-crontab -i {{ app_name }}"
+  args:
+    chdir: "{{ ansistrano_release_path.stdout }}"

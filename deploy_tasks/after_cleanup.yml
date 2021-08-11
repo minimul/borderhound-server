@@ -35,22 +35,3 @@
   shell: "yarn install --check-files"
   args:
     chdir: "{{ ansistrano_release_path.stdout }}"
-
-- name: Restart puma and good_job
-  become: true
-  become_user: root
-  systemd:
-    name: puma
-    state: restarted
-
-- name: Reload nginx
-  become: true
-  become_user: root
-  systemd:
-    name: nginx
-    state: reloaded
-
-- name: Update crontab
-  shell: "{{ rbenv_bundle }} exec whenever --update-crontab -i {{ app_name }}"
-  args:
-    chdir: "{{ ansistrano_release_path.stdout }}"

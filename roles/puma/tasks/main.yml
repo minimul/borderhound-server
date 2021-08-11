@@ -16,11 +16,6 @@
   when: puma_service_file.changed
 
 - name: Enable puma
-  service:
+  systemd:
     name: puma
     enabled: yes
-
-- name: Restart puma
-  service:
-    name: puma
-    state: restarted

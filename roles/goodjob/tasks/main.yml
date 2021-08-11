@@ -16,11 +16,6 @@
   when: good_job_service_file.changed
 
 - name: Enable GoodJob
-  service:
+  systemd:
     name: good_job
     enabled: yes
-
-- name: Restart GoodJob
-  service:
-    name: good_job
-    state: restarted
