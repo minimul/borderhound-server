@@ -80,8 +80,20 @@ Take a look at the Vagrantfile first:
 
 Vagrant.configure(2) do |config|
   config.vm.box = "bento/ubuntu-20.04"
+  ip_address = "192.168.2.200"
+  config.vm.network "public_network", :bridge => "en0: Ethernet", :ip => ip_address
 
-  config.vm.network "public_network", :bridge => "en0: Ethernet", :ip => "192.168.2.200"
+  config.vm.provision "ansible" do |ansible| 
+    ansible.compatibility_mode = "2.0"
+    ansible.playbook = "provision.yml"
+    # ansible.tags = "common,environment"
+    # ansible.tags = "swapfile"
+    ansible.extra_vars = { 
+      ansible_python_interpreter: "/usr/bin/python3",
+      within_virtual_box: true,
+      ip_address: ip_address
+    }
+  end
 end
 ```
 
@@ -91,7 +103,8 @@ The IP address I'm using works on my subnet but maybe not on yours. For example,
 ```
 vagrant box add bento/ubuntu-20.04
 vagrant up
-# Deploy your Rails app using Ansistrano:
+# vagrant up will run the ansible provisioning also. See Vagrantfile above.
+# Next deploy your Rails app using Ansistrano.
 ansible-playbook -i inventories/development.yml deploy.yml
 ```
 
@@ -99,19 +112,19 @@ If all goes well you should be able to see your app when to the IP address, `192
 
 Notes:
 
-- To provision in development you must use `vagrant provision` and it has all of the proper SSH settings.I don't bother with builtin Vagrant provisioning. 
+- To provision in development you must use `vagrant provision` and it has all of the proper SSH settings.
 
-- Remember to make use of the tags. See the Vagrantfile on how to do that. Tags will save a bunch of time as you modify and hack the roles to meet your needs.
+- Remember to make use of the tags. See the `Vagrantfile` above for examples. Tags will save a bunch of time as you modify and hack the roles to meet your needs.
 
-- The `inventories/development.yml` file is only for using the `deploy.yml` playbook to deploy your Rails app. You can use the inventory file for provisioning after the initial provision but best to just stick with `vagrant provision`.
+- The `inventories/development.yml` file is only for using the `deploy.yml` playbook to deploy your Rails app. You can use the inventory file for provisioning after the initial provision but it's best to just stick with `vagrant provision` in development.
 
-- I also made a host name entry (`borderhound-local.com`) in my local host file `/etc/hosts`. You can do the same with your domain/app name because within the nginx role there will be a `server_name` entry added like this: `{{ app_name }}-local.com`. This will only be done in development.
+- I also made a host name entry (`borderhound-local.com`) in my local host file `/etc/hosts`. You can do the same with your domain/app name because within the nginx role there will be a `server_name` entry added like this: `{{ app_name }}-local.com`. This modification is only done in development.
 
 ### Step 5. Production Provision & Deploy
 
 #### Step 5a: Create a DigitalOcean Droplet
 
-Your going to need a DigitalOcean (DO) account and an API key. You should definitely leverage a DO floating IP and that is what I'm doing in these playbooks. In the `do-provision.yml` playbook it will create a floating IP automatically. If you make a floating IP on DO manually (probably the best route frankly) then enter it in `.env.yml` (see step 2):
+You are going to need a DigitalOcean (DO) account and an API key. You should definitely leverage a DO floating IP and that is what I'm doing in these playbooks. The `do-provision.yml` playbook will create a floating IP automatically. If you make a floating IP on DO manually (probably the best route frankly) then enter it in `.env.yml` (see step 2). On subsequent `do-provision.yml` runs the playbook will not try to make a new floating IP if it is present in `.env.yml`.:
 
 1. Create a SSH key for new server e.g.:
   - `cd ~/.ssh`
@@ -119,13 +132,12 @@ Your going to need a DigitalOcean (DO) account and an API key. You should defini
 2. Create a new file called `.env.yml` using the `.env.yml.sample` file as a template.
 3. Put that file in `.gitignore`:
   - `echo .env.yaml >> .gitignore`
-4. Install some more Galaxy roles:
-5. `ansible-playbook -e "@.env.yml" do-provision.yml`
-6. Put the returned floating IP in .env.yml.
+4. `ansible-playbook -e "@.env.yml" do-provision.yml`
+5. Put the returned floating IP in .env.yml.
 
 #### Step 5b: Provision the new DigitalOcean Droplet
 
-1. Record the floating IP and create a DNS "A" and "CNAME" record with the floating IP mapped to your domain name.
+1. Create a DNS "A" and "CNAME" record with the floating IP mapped to your domain name.
 2. Make sure your rails app Puma config file is similar or the same as the [sample provided](https://github.com/minimul/borderhound-server/blob/main/puma.for.rails.app.sample.rb).
 3. Provision the droplet
   - `ansible-playbook -e "@.env.yml" -i inventories/production.yml provision.yml`
@@ -140,7 +152,6 @@ Notes:
 
 ####  Installing additional packages
 By default, the following packages are installed. You can add/remove packages to this list by changing the `required_package` variable in `app-vars.yml`
-
 
 #### Installing Ansible locally in POSIX Systems With ASDF
 
@@ -159,7 +170,4 @@ pip install ansible==2.9.23
 $ asdf reshim python
 $ which ansible
 ```
-
-
----
 
