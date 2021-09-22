@@ -1,15 +1,22 @@
 
-- name: Restart puma
+---
+- name: Restart Puma
+  become: true
+  become_user: root
   systemd:
     name: puma
     state: restarted
 
 - name: Restart GoodJob
+  become: true
+  become_user: root
   systemd:
     name: good_job
     state: restarted
 
-- name: Reload nginx
+- name: Reload Nginx
+  become: true
+  become_user: root
   systemd:
     name: nginx
     state: reloaded

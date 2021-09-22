@@ -53,27 +53,7 @@
       with_items: "{{ shared_files_to_copy }}"
       tags:
         - copy
-
+  
   roles:
     - role: ansistrano.deploy
 
-    # Install puma here because the puma config is only available
-    # after pulling down the app source code, which happens during the
-    # ansistrano.deploy role.
-    - role: puma
-      tags: puma
-      become: true
-      become_user: root
-
-    # Same with GoodJob, config file is within app code
-    - role: goodjob
-      tags: goodjob
-      become: true
-      become_user: root
-    
-    # Restart Puma, GoodJob, reload Nginx and whenever
-    - role: restarts
-      tags: restarts
-      become: true
-      become_user: root
-    

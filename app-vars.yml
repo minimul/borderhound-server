@@ -48,7 +48,8 @@ ansistrano_keep_releases: 3
 ansistrano_deploy_via: git
 ansistrano_git_repo: "{{ app_git_repo }}"
 ansistrano_git_branch: "{{ app_git_branch }}"
-ansistrano_after_cleanup_tasks_file: "{{ playbook_dir }}/deploy_tasks/after_cleanup.yml"
+ansistrano_before_symlink_tasks_file: "{{ playbook_dir }}/deploy_tasks/prepare.yml"
+ansistrano_after_symlink_tasks_file: "{{ playbook_dir }}/deploy_tasks/restart.yml"
 ansistrano_git_identity_key_path: "~/.ssh/id_rsa"
 ansistrano_ensure_shared_paths_exist: yes
 ansistrano_ensure_basedirs_shared_files_exist: yes
