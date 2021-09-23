@@ -8,9 +8,9 @@
   roles: 
     - role: common
       tags: common
+    - role: user
     - role: environment
       tags: environment
-    - role: user
     - role: ssh
     - role: ruby
       tags: ruby

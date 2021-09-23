@@ -5,11 +5,26 @@
     line: "set -o vi"
     state: present
 
-- name: Enable inputrc vim bindings
+- name: Enable /etc/inputrc vim bindings
   lineinfile:
     dest: "/etc/inputrc"
-    line: "set editing-mode vi"
+    line: "{{ item.line }}"
     state: present
+  loop:
+  - { line: 'set keymap vi' }
+  - { line: 'set editing-mode vi' }
+
+- name: Enable /etc/{{ deploy_user }}/.inputrc vim bindings
+  become: true
+  become_user: "{{ deploy_user }}" 
+  lineinfile:
+    dest: "/home/{{ deploy_user }}/.inputrc"
+    line: "{{ item.line }}"
+    state: present
+    create: yes
+  loop:
+  - { line: 'set keymap vi' }
+  - { line: 'set editing-mode vi' }
 
 - name: Set timezone to {{ timezone }}
   when: ansible_date_time.tz != timezone
