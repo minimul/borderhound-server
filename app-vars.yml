@@ -59,9 +59,8 @@ ansistrano_shared_paths:
   - log           # log -> ../../shared/log
   - tmp           # tmp -> ../../shared/tmp
   - vendor        # vendor -> ../../shared/vendor
-  - public/assets # For rails asset pipeline
-  - public/packs  # For webpacker
-  - node_modules  # For webpacker node_modules -> ../../shared/node_modules
+  - public/assets # For Rails asset pipeline
+  - node_modules  # For node_modules -> ../../shared/node_modules
 
 shared_files_to_copy:
   - { src: database.yml.j2, dest: config/database.yml }
@@ -93,7 +92,7 @@ required_packages:
   - python3-certbot-nginx
 
 # Ruby
-ruby_version: 2.7.4
+ruby_version: 3.0.2
 rbenv_ruby_configure_opts: "RUBY_CONFIGURE_OPTS=--with-jemalloc"
 rbenv_root_path: "{{ deploy_user_path }}/.rbenv"
 rbenv_shell_rc_path: "{{ deploy_user_path }}/.bashrc"
