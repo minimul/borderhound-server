@@ -30,7 +30,7 @@
     chdir: "{{ ansistrano_release_path.stdout }}"
 
 - name: Precompiling assets
-  shell: "{{ rbenv_bundle }} exec rails assets:precompile"
+  shell: "NODE_ENV=production {{ rbenv_bundle }} exec rails assets:precompile"
   become: true
   become_user: "{{ deploy_user }}"
   args:
