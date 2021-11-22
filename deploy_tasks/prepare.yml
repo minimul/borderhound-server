@@ -29,6 +29,13 @@
   args:
     chdir: "{{ ansistrano_release_path.stdout }}"
 
+- name: Clean old assets. Needed to get all potential Tailwindcss changes
+  shell: "{{ rbenv_bundle }} exec rails assets:clean"
+  become: true
+  become_user: "{{ deploy_user }}"
+  args:
+    chdir: "{{ ansistrano_release_path.stdout }}"
+
 - name: Precompiling assets
   shell: "NODE_ENV=production {{ rbenv_bundle }} exec rails assets:precompile"
   become: true
