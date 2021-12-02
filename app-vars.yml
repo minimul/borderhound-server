@@ -233,6 +233,7 @@ certbot_email: "admin@{{ inventory_hostname }}"
 certbot_domains:
   - "{{ inventory_hostname }}"
   - "www.{{ inventory_hostname }}"
+  - "staging.{{ inventory_hostname }}"
 certbot_flags: ""
 
 # PostgreSQL Backup to S3
