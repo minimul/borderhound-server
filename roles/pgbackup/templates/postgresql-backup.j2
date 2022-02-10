@@ -15,7 +15,7 @@ echo " * Uploading to S3";
 aws s3 cp {{ postgresql_backup_dir }}/"$FILENAME".dump s3://{{ postgresql_s3_backup_bucket }}/"$FILENAME".dump
 
 echo " * Delete local file";
-# rm {{ postgresql_backup_dir }}/"$FILENAME".dump
+rm {{ postgresql_backup_dir }}/"$FILENAME".dump
 
 
 # Delete old files
@@ -39,5 +39,4 @@ aws s3 ls s3://{{ postgresql_s3_backup_bucket }}/ | while read -r line;  do
     fi
 done;
 
-echo " * Ping Healthcheck URL";
-curl -fsS --retry 3 {{ postgresql_db_backup_healthcheck }}
+# Put in an email notification here

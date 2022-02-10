@@ -38,3 +38,5 @@
       tags: ufw
     - role: swapfile
       tags: swapfile
+    - role: pgbackup
+      tags: pgbackup

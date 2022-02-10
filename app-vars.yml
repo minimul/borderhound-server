@@ -128,6 +128,7 @@ required_packages:
   - lsb-release
   - wget
   - xdg-utils
+  - awscli
   # puppeteer
 
 # Ruby
@@ -243,8 +244,7 @@ aws_secret: "{{ vault_aws_secret }}"
 postgresql_backup_dir: "{{ deploy_user_path }}/backups"
 postgresql_backup_filename_format: >-
   {{ app_name }}-%Y%m%d-%H%M%S.pgdump
-postgresql_db_backup_healthcheck: "NOTIFICATION_URL (eg: https://healthcheck.io/)"
-postgresql_s3_backup_bucket: "DB_BACKUP_BUCKET"
+postgresql_s3_backup_bucket: "{{ app_name }}-db-backups" # Must be created manually
 postgresql_s3_backup_hour: "3"
 postgresql_s3_backup_minute: "*"
 postgresql_s3_backup_delete_after: "7 days" # days after which old backups should be deleted

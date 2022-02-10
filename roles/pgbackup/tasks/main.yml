@@ -1,8 +1,11 @@
 - name: Create postgresql backup directory
   file:
-    path: "{{ postgresql_backup_dir }}"
+    path: "{{ item }}"
     recurse: true
     state: directory
+  loop:
+    - "{{ postgresql_backup_dir }}"
+    - "{{ deploy_user_path }}/.aws"
 
 - name: Set backup directory permissions
   file:
@@ -12,6 +15,13 @@
     group: "{{ deploy_group }}"
     mode: 0700
 
+- name: Create a log for cron
+  become: true
+  file:
+    state: touch
+    path: /var/log/cron
+    mode: 0622 # Needs to be writable for deployer user
+
 - name: Upload backup script
   become: true
   template:
@@ -19,14 +29,19 @@
     dest: "{{ postgresql_backup_dir }}/postgresql-backup.sh"
     mode: 0755
 
+- name: Set AWS S3 credentials
+  template:
+    src: aws-credentials.j2
+    dest: "{{ deploy_user_path }}/.aws/credentials"
+    mode: 0644
+
 - name: Configure backup cron job
   cron:
     name: Backup cron job
     minute: "{{ postgresql_s3_backup_minute }}"
     hour: "{{ postgresql_s3_backup_hour }}"
     user: "{{ deploy_user }}"
-    job: "bash -lc {{ postgresql_backup_dir }}/postgresql-backup.sh"
+    job: "bash -lc {{ postgresql_backup_dir }}/postgresql-backup.sh >> /var/log/cron 2>&1"
     cron_file: "postgresql-backup"
     state: present
 
-    
