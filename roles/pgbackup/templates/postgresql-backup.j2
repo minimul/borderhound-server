@@ -3,19 +3,20 @@ set -e
 
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
-NOW=$(date +"%Y-%m-%d-at-%H-%M-%S")
-FILENAME="{{ postgresql_db_name }}"-"$NOW"
+NOW=$(date +"%Y-%m-%d")
+FILENAME="{{ postgresql_db_name }}-$NOW.xz"
+FULL_LOCAL_PATH="{{ postgresql_backup_dir }}/$FILENAME"
 
 DELETION_TIMESTAMP=`[ "$(uname)" = Linux ] && date +%s --date="-{{ postgresql_s3_backup_delete_after }}"`
 
 echo " * Generating backup";
-PGPASSWORD={{ postgresql_db_password }} pg_dump -Fc --no-acl --no-owner -h localhost -U {{ postgresql_db_user }} {{ postgresql_db_name }} > {{ postgresql_backup_dir }}/"$FILENAME".dump
+PGPASSWORD={{ postgresql_db_password }} pg_dump -Fc --no-acl --no-owner -h localhost -U {{ postgresql_db_user }} {{ postgresql_db_name }} | xz > $FULL_LOCAL_PATH
 
 echo " * Uploading to S3";
-aws s3 cp {{ postgresql_backup_dir }}/"$FILENAME".dump s3://{{ postgresql_s3_backup_bucket }}/"$FILENAME".dump
+aws s3 cp $FULL_LOCAL_PATH s3://{{ postgresql_s3_backup_bucket }}/$FILENAME
 
 echo " * Delete local file";
-rm {{ postgresql_backup_dir }}/"$FILENAME".dump
+rm $FULL_LOCAL_PATH
 
 
 # Delete old files
@@ -30,11 +31,11 @@ aws s3 ls s3://{{ postgresql_s3_backup_bucket }}/ | while read -r line;  do
     if [[ $createDate -lt $DELETION_TIMESTAMP ]]
     then
         # Get file name
-        FILENAME=`echo $line|awk {'print $4'}`
-        if [[ $FILENAME != "" ]]
+        PARSE_FILENAME=`echo $line|awk {'print $4'}`
+        if [[ $PARSE_FILENAME != "" ]]
           then
-            echo "   -> Deleting $FILENAME"
-            aws s3 rm s3://{{ postgresql_s3_backup_bucket }}/$FILENAME
+            echo "   -> Deleting $PARSE_FILENAME"
+            aws s3 rm s3://{{ postgresql_s3_backup_bucket }}/$PARSE_FILENAME
         fi
     fi
 done;

@@ -8,4 +8,5 @@ todo.txt
 vim.sess
 README.md.html
 droplet_ssh_config
+download.and.restore.prod.db.sh
 .env

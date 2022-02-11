@@ -1,0 +1,10 @@
+#- community.general.homebrew:
+#    name: s3cmd
+#    state: present
+#    update_homebrew: yes
+
+- name: Create locally the download and restore db script
+  template:
+    src: download.and.restore.prod.db.j2
+    dest: "{{ ansible_env.PWD }}/download.and.restore.prod.db.sh"
+    mode: 0755

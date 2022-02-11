@@ -129,6 +129,7 @@ required_packages:
   - wget
   - xdg-utils
   - awscli
+  - xz-utils
   # puppeteer
 
 # Ruby
@@ -246,7 +247,7 @@ postgresql_backup_filename_format: >-
   {{ app_name }}-%Y%m%d-%H%M%S.pgdump
 postgresql_s3_backup_bucket: "{{ app_name }}-db-backups" # Must be created manually
 postgresql_s3_backup_hour: "3"
-postgresql_s3_backup_minute: "*"
+postgresql_s3_backup_minute: "0" # Daily at 3AM
 postgresql_s3_backup_delete_after: "7 days" # days after which old backups should be deleted
 
 # Swap disk
