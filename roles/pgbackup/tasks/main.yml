@@ -20,7 +20,7 @@
   file:
     state: touch
     path: /var/log/cron
-    mode: 0644 # Needs to be read/write for deployer user
+    mode: 0622 # Needs to be writable for the deployer user
 
 - name: Upload backup script
   become: true

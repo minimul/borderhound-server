@@ -153,6 +153,12 @@ Notes:
 ####  Installing additional packages
 By default, the following packages are installed. You can add/remove packages to this list by changing the `required_package` variable in `app-vars.yml`
 
+#### Postgres Backups to S3
+
+You'll need to configure your S3 bucket manually and add in your S3 credentials but beside those things there shouldn't be much modifications needed to the `pgbackup` role.
+
+I have a download and restore backup to local Postgres script that'll also take just a little bit of modification to get working for your app. To create the download and restore script run this command `ansible-playbook local-provision.yml`. You can then modified the outputted script `download.and.restore.prod.db.sh` to your hearts content.
+
 #### Installing Ansible locally in POSIX Systems With ASDF
 
 These Ansible roles work for Ansible 2.9.23. I suggest using the excellent [ASDF](https://asdf-vm.com) in and aid to use get the correct Ansible version installed. So install ASDF first and then do these steps:

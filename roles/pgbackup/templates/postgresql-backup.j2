@@ -10,7 +10,7 @@ FULL_LOCAL_PATH="{{ postgresql_backup_dir }}/$FILENAME"
 DELETION_TIMESTAMP=`[ "$(uname)" = Linux ] && date +%s --date="-{{ postgresql_s3_backup_delete_after }}"`
 
 echo " * Generating backup";
-PGPASSWORD={{ postgresql_db_password }} pg_dump -Fc --no-acl --no-owner -h localhost -U {{ postgresql_db_user }} {{ postgresql_db_name }} | xz > $FULL_LOCAL_PATH
+PGPASSWORD={{ postgresql_db_password }} pg_dump --no-acl --no-owner -U {{ postgresql_db_user }} {{ postgresql_db_name }} | xz > $FULL_LOCAL_PATH
 
 echo " * Uploading to S3";
 aws s3 cp $FULL_LOCAL_PATH s3://{{ postgresql_s3_backup_bucket }}/$FILENAME

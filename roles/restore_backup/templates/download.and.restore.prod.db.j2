@@ -1,44 +1,35 @@
 #!/bin/bash
 set -o errexit
 
-backup_file=production_backup.tar
-base_dir=/Users/minimul/WorkSpaces
+backup_file=production_backup
+base_dir=$HOME/WorkSpaces
 
 dir=$base_dir/borderhound-server
 bucket=borderhound-db-backups
 bucket_path=production_backup
 local_db=borderhound_production
 
-source $dir/.env
- 
 s3cmd="s3cmd --access_key={{ aws_key }} --secret_key={{ aws_secret }}"
 cmd="$s3cmd ls s3://$bucket/ | tail -n 1"
 output=$(eval $cmd)
-output=$(echo $output | cut -d ' ' -f 2)
 echo $output
-exit # short-circuit to test output
-file=$output$backup_file
+output=$(echo $output | cut -d ' ' -f 4)
+echo $output
+# exit # short-circuit to test output
 dest=$dir/$backup_file
-sql_file=$dir/production_backup/databases/PostgreSQL.sql
-$s3cmd get --force $file $dest 
+$s3cmd get --force $output $dest.xz 
 cd $dir
-tar xvzf $dest
-gunzip $sql_file.gz
-cmd="dropdb $local_db --if-exists -i"
-echo $cmd
-eval $cmd
-cmd="createdb $local_db"
-echo $cmd
-eval $cmd
-pg_command="psql -U `whoami` $local_db"
+xz -d $dest.xz
+# Make sure the proper Postgres version is put into the
+# .tool-versions for this directory
+pg_command="psql --user=`whoami` --port=5433 $local_db"
 kill_connections="SELECT pg_terminate_backend(pg_stat_activity.pid) FROM pg_stat_activity WHERE pg_stat_activity.datname = current_database() AND pid <> pg_backend_pid();"
 kill_cmd="echo '$kill_connections' | $pg_command"
 echo $kill_cmd
 eval $kill_cmd 
 echo "Loading data. Please wait ..."
-restore="dropdb --if-exists $local_db;createdb $local_db;$pg_command < $sql_file"
+restore="dropdb --if-exists $local_db --port=5433;createdb $local_db --port=5433;$pg_command < $dest"
 echo $restore
 eval $restore
 echo "Success - now clean up"
 rm -f $dest
-rm -rf $dir/production_backup
