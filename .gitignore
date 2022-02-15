@@ -9,4 +9,5 @@ vim.sess
 README.md.html
 droplet_ssh_config
 download.and.restore.prod.db.sh
+launch.prod.pgweb.sh
 .env

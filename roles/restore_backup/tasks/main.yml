@@ -8,3 +8,9 @@
     src: download.and.restore.prod.db.j2
     dest: "{{ ansible_env.PWD }}/download.and.restore.prod.db.sh"
     mode: 0755
+
+- name: Create a local script to launch pgweb on the production DB via a SSH tunnel
+  template:
+    src: launch.prod.pgweb.j2
+    dest: "{{ ansible_env.PWD }}/launch.prod.pgweb.sh"
+    mode: 0755
