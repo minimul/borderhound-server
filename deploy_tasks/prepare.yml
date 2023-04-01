@@ -37,7 +37,8 @@
     chdir: "{{ ansistrano_release_path.stdout }}"
 
 - name: Precompiling assets
-  shell: "NODE_ENV=production {{ rbenv_bundle }} exec rails assets:precompile"
+  # -i runs in interactive mode so .bashrc is run; nvm use is needed to respect the .nvmrc
+  shell: "bash -i -c 'nvm use;{{ rbenv_bundle }} exec rails assets:precompile'"
   become: true
   become_user: "{{ deploy_user }}"
   args:

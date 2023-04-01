@@ -1,0 +1,22 @@
+# Run this with => ansible-playbook -e "@.env.yml" -i inventories/production.yml test_deploy.yml
+---
+- name: Test Deploy of Rails app
+  hosts: all
+  vars_files:
+    - app-vars.yml
+  become: true
+  become_user: "{{ deploy_user }}"
+
+  tasks:
+    - name: Test nvmrc
+      # shell: "bash -i -c 'nvm use lts/hydrogen;node -v'"
+      shell: "bash -i -c 'nvm use;node -v'"
+      become: true
+      become_user: "{{ deploy_user }}"
+      args:
+        chdir: "{{ deploy_user_path }}/borderhound/releases/20230331214037Z"
+      register: which_node
+    
+    - name: Output which_node
+      debug:
+        var: which_node.stdout

@@ -144,7 +144,9 @@ rbenv_bundle: "{{ rbenv_root_path }}/shims/bundle"
 additional_rubies: []
 
 # Nodejs
-nodejs_version: "16.x"
+nodejs_versions:
+  - "lts/gallium"
+  - "lts/hydrogen"
 
 # Postgresql
 postgresql_version: "12"
