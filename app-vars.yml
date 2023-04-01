@@ -133,7 +133,7 @@ required_packages:
   # puppeteer
 
 # Ruby
-ruby_version: 3.0.2
+ruby_version: 3.0.6
 rbenv_ruby_configure_opts: "RUBY_CONFIGURE_OPTS=--with-jemalloc"
 rbenv_root_path: "{{ deploy_user_path }}/.rbenv"
 rbenv_shell_rc_path: "{{ deploy_user_path }}/.bashrc"
